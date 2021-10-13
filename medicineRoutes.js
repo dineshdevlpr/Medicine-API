@@ -36,19 +36,23 @@ var storage = multer.diskStorage({
                   client
                     .db("Medical-App")
                     .collection("medicines")
-                    .insertMany(csvData, (err, res) => {
-                      if (err) throw err;
-          
-                      console.log(`Inserted: ${res.insertedCount} rows into mongoDB database`);
+                    .insertMany(csvData)
+                    if (res.status=200){
+                      res.sendStatus(200).json({
+                        message: "Data Successfully Uploaded",
+                      });
+                    }else {
+                      res.sendStatus(500)
+                    }
+                    
                       client.close();
-                    });
                 }
               );
         });
     })
 
 
-    // search using particular string i.e., searchString
+    // search using particular string using $text
     router.get('/searchMedicine/:searchString', async (req, res) => {
         try {
             let client = await mongodb.connect(dbURL);
@@ -75,6 +79,7 @@ var storage = multer.diskStorage({
     
     })
 
+    // searching using $regex
     // router.get('/searchMedicine/:searchString', async (req, res) => {
     //     try {
     //         let client = await mongodb.connect(dbURL);
@@ -122,18 +127,43 @@ var storage = multer.diskStorage({
         let orderId = randomstring.generate()
       let client = await mongodb.connect(dbURL);
       let db = client.db("Medical-App");
-      await db.collection("orders").insertOne({ orderID : orderId , c_unique_code: req.body.c_unique_code , quantity: req.body.quantity , c_name: req.body.c_name });
+      let data = await db.collection("orders").insertOne({ orderID : orderId , c_unique_code: req.body.c_unique_code , quantity: req.body.quantity , c_name: req.body.c_name , order_date : new Date });
   
-        if(res.status = 200){
-            console.log("Order Successfully Placed")
+        if(data){
+          console.log("Console : Order Successfully Placed")
+          res.status(200).json({
+            message: "Order Successfully Placed",
+          });
         }else {
             console.log("Order did not Placed")
+            res.sendStatus(500)
       }
     } catch (err) {
       console.log(err);
       res.sendStatus(500);
     }
   });
+
+
+  // getting placed orders
+  router.get('/placeorder', async (req, res) => {
+    try {
+        let client = await mongodb.connect(dbURL);
+        let db = client.db("Medical-App");
+        let data = db.collection("orders").find();
+        console.log(data)
+        if (data) {
+            res.status(200).json(data);
+        } else {
+            res.status(404).json({ message: "No Data Found" })
+        }
+        client.close();
+    } catch (error) {
+        console.log(error)
+        res.status(500)
+    }
+
+})
 
 
 
