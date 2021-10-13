@@ -51,23 +51,15 @@ var storage = multer.diskStorage({
         });
     })
 
-
-    // search using particular string using $text
+    // searching using $regex method
     router.get('/searchMedicine/:searchString', async (req, res) => {
         try {
             let client = await mongodb.connect(dbURL);
             let db = client.db("Medical-App");
-            let data = db.collection("medicines").find({
-                $text:
-                  {
-                    $search: req.params.searchString,
-                    $language: "none",
-                    $caseSensitive: false,
-                    $diacriticSensitive: false
-                  }
-              });
+            let data = await db.collection("medicines").find({c_name:{$regex: req.params.searchString ,$options:"$i"}}).toArray();
+            console.log(data)
             if (data) {
-                res.status(200).json(data.c_name);
+                res.status(200).json(data);
             } else {
                 res.status(404).json({ message: "No Data Found" })
             }
@@ -79,25 +71,6 @@ var storage = multer.diskStorage({
     
     })
 
-    // searching using $regex
-    // router.get('/searchMedicine/:searchString', async (req, res) => {
-    //     try {
-    //         let client = await mongodb.connect(dbURL);
-    //         let db = client.db("Medical-App");
-    //         let data = db.collection("medicines").find({ sku: { $regex: /^req.params.searchString/i } });
-    //         if (data) {
-    //             res.status(200).json(data.c_name);
-    //         } else {
-    //             res.status(404).json({ message: "No Data Found" })
-    //         }
-    //         client.close();
-    //     } catch (error) {
-    //         console.log(error)
-    //         res.status(500)
-    //     }
-    
-    // })
-
     
 
     // get data using unique code
@@ -105,7 +78,8 @@ var storage = multer.diskStorage({
         try {
             let client = await mongodb.connect(dbURL);
             let db = client.db("Medical-App");
-            let data = db.collection("medicines").find({c_unique_code:req.params.uniqueID});
+            console.log(db)
+            let data = await db.collection("medicines").find({c_unique_code:req.params.uniqueID}).toArray();
             if (data) {
                 res.status(200).json(data);
             } else {
@@ -121,7 +95,7 @@ var storage = multer.diskStorage({
 
 
 
-    // placing order
+    // placing order with unique order ID
     router.post("/placeorder", async (req, res) => {
     try {
         let orderId = randomstring.generate()
@@ -145,12 +119,12 @@ var storage = multer.diskStorage({
   });
 
 
-  // getting placed orders
+  // getting all placed orders
   router.get('/placeorder', async (req, res) => {
     try {
         let client = await mongodb.connect(dbURL);
         let db = client.db("Medical-App");
-        let data = db.collection("orders").find();
+        let data = await db.collection("orders").find().toArray();
         console.log(data)
         if (data) {
             res.status(200).json(data);
@@ -164,30 +138,6 @@ var storage = multer.diskStorage({
     }
 
 })
-
-
-
-
-    // created for checking purpose
-
-    // router.get('/all', async (req, res) => {
-    //     try {
-    //         let client = await mongodb.connect(dbURL);
-    //         let db = client.db("Medical-App");
-    //         let data = db.collection("medicines").find();
-    //         if (data) {
-    //             res.status(200).json(data);
-    //         } else {
-    //             res.status(404).json({ message: "No Data Found" })
-    //         }
-    //         client.close();
-    //     } catch (error) {
-    //         console.log(error)
-    //         res.status(500)
-    //     }
-    
-    // })
-
 
 
 module.exports = router;
